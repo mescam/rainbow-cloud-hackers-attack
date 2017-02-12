@@ -22,9 +22,9 @@ def generate(chain_len, hash_f, reduc_f, alphabet, max_word_len, start_word):
         alphabet.append('')
 
     password = start_word
-    for i in xrange(int(chain_len)):
+    for i in xrange(chain_len):
         hashed = hash_f(password)
-        password = reduc_f(hashed, alphabet, int(max_word_len), i)
+        password = reduc_f(hashed, alphabet, max_word_len, i)
         # print password
     return start_word, hashed
 
