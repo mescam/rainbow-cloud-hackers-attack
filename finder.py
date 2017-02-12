@@ -1,19 +1,14 @@
 import argparse
 
 from utils import hashers, reductors, DEFAULT_ALPHABET
+from db import DB
 
-
-def check_in_table(hashed):
-    # TODO: check in table if there is a chain ending with the given hash
-    #       -> if yes: then return the word which generated the chain
-    #       -> else: return None
-    if hashed == 'c419b06b4c6579b50ff05adb3b8424f1':
-        return 'ba'
-    else:
-        return None
+db = DB()
 
 
 def find(hash_target, chain_len, hash_f, reduc_f, alphabet, max_word_len):
+    db.set_rainbow_parameters(
+        chain_len, hash_f, reduc_f, alphabet, max_word_len)
     if hash_f not in hashers.available():
         raise NameError("Hashing function not found")
     hash_f = getattr(hashers, hash_f)
@@ -26,19 +21,21 @@ def find(hash_target, chain_len, hash_f, reduc_f, alphabet, max_word_len):
         alphabet.append('')
 
     # firstly, find the chain which contains the password
+    found = False
     for i in xrange(chain_len):
         hashed = hash_target
         for j in xrange(i, chain_len):
-            start_word = check_in_table(hashed)
-            if start_word is not None:
+            if db.exists(hashed):
+                found = True
+                start_word = db.get(hashed)
                 break
             password = reduc_f(hashed, alphabet, max_word_len, j)
             hashed = hash_f(password)
-        if start_word is not None:
+        if found:
             break
 
     # if you somehow didn't manage to find the chain...
-    if start_word is None:
+    if not found:
         return None
 
     # secondly, given the chain's starting word, regenerate it to find ur pass
