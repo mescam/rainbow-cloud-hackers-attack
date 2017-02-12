@@ -1,15 +1,20 @@
 import argparse
 
 from utils import hashers, reductors, DEFAULT_ALPHABET
+from db import DB
+
+db = DB()
 
 
 def generate(chain_len, hash_f, reduc_f, alphabet, max_word_len, start_word):
+    db.set_rainbow_parameters(
+        chain_len, hash_f, reduc_f, alphabet, max_word_len)
     if hash_f not in hashers.available():
         raise NameError("Hashing function not found")
-    hash_f = getattr(hashers, hash_f)
+    hf = getattr(hashers, hash_f)
     if reduc_f not in reductors.available():
         raise NameError("Reduction function not found")
-    reduc_f = getattr(reductors, reduc_f)
+    rf = getattr(reductors, reduc_f)
     if len(start_word) > max_word_len:
         raise ValueError("Starting word can't be longer than the max_word_len")
 
@@ -19,9 +24,10 @@ def generate(chain_len, hash_f, reduc_f, alphabet, max_word_len, start_word):
 
     password = start_word
     for i in xrange(chain_len):
-        hashed = hash_f(password)
-        password = reduc_f(hashed, alphabet, max_word_len, i)
-        print password
+        # print password
+        hashed = hf(password)
+        password = rf(hashed, alphabet, max_word_len, i)
+    db.set(hashed, start_word)
     return start_word, hashed
 
 
