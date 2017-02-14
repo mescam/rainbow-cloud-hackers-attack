@@ -1,38 +1,42 @@
-import os
-import redis
+import boto3
 
-KEY_PREFIX = 'rainbow'
+dynamodb = boto3.resource('dynamodb')
 
 
 class DB(object):
 
-    def __init__(self):
-        host = os.environ['DB_HOST']
-        port = os.environ['DB_PORT']
-        self.db = redis.StrictRedis(host=host, port=port, db=0)
-        self.params = {}
+    def __init__(self, table):
+        self.table = dynamodb.Table(table)
+        self.params = ''
 
     def set_rainbow_parameters(self, chain_len, hash_f, reduc_f,
                                alphabet, max_word_len):
-        self.params = {
-            'l': chain_len,
-            'h': hash_f,
-            'r': reduc_f,
-            'a': alphabet,
-            'w': max_word_len
-        }
+        self.params = '-'.join([str(chain_len), hash_f, reduc_f,
+                                alphabet, str(max_word_len)])
 
     def construct_key(self, key):
-        return ':'.join([KEY_PREFIX, key, str(self.params)])
+        return ':'.join([key, str(self.params)])
 
     def exists(self, key):
-        db_key = self.construct_key(key)
-        return self.db.exists(db_key)
+        response = self.table.get_item(
+            Key={
+                'Key': self.construct_key(key)
+            }
+        )
+        return 'Item' in response
 
     def get(self, key):
-        db_key = self.construct_key(key)
-        return self.db.get(db_key)
+        response = self.table.get_item(
+            Key={
+                'Key': self.construct_key(key)
+            }
+        )
+        return response['Item']['val'] if 'Item' in response else None
 
     def set(self, key, value):
-        db_key = self.construct_key(key)
-        return self.db.set(db_key, value)
+        self.table.put_item(
+            Item={
+                'Key': self.construct_key(key),
+                'val': value
+            }
+        )

@@ -1,9 +1,11 @@
-import argparse
+import boto3
+import json
 
 from utils import hashers, reductors, DEFAULT_ALPHABET
 from db import DB
 
-db = DB()
+q_name = 'rcha-queue-hackerz'
+db = DB('rainbows')
 
 
 def generate(chain_len, hash_f, reduc_f, alphabet, max_word_len, start_word):
@@ -32,23 +34,17 @@ def generate(chain_len, hash_f, reduc_f, alphabet, max_word_len, start_word):
 
 
 if __name__ == '__main__':
-    p = argparse.ArgumentParser(description='Generate a single rainbow chain.')
-    p.add_argument('chain_len', type=int,
-                   help="length of the chain")
-    p.add_argument('hash_f', choices=hashers.available(),
-                   help="password hashing function")
-    p.add_argument('reduc_f', choices=reductors.available(),
-                   help='''reduction function used for
-                           generating valid passwords''')
-    p.add_argument('max_word_len', type=int,
-                   help="maximum password length")
-    p.add_argument('start_word', metavar='start',
-                   help="password that will initialize the chain")
-    p.add_argument('-a', dest='alphabet',
-                   default=DEFAULT_ALPHABET,
-                   help='''a limited set of characters used for
-                           generating valid passwords (e.g. "-a abcd123").
-                           By default it will use all printable characters''')
+    sqs = boto3.resource('sqs')
+    queue = sqs.get_queue_by_name(QueueName=q_name)
 
-    args = p.parse_args()
-    print generate(**vars(args))
+    while True:
+        for msg in queue.receive_messages(
+            MessageAttributeNames=[
+                'string',
+            ],
+            MaxNumberOfMessages=1,
+            VisibilityTimeout=100,
+            WaitTimeSeconds=5
+        ):
+            print generate(**json.loads(msg.body))
+            msg.delete()

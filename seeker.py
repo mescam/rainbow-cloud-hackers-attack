@@ -1,12 +1,14 @@
-import argparse
+import boto3
+import json
 
 from utils import hashers, reductors, DEFAULT_ALPHABET
 from db import DB
 
-db = DB()
+q_name = 'rcha-queue-seekerz'
+db = DB('rainbows')
 
 
-def find(hash_target, chain_len, hash_f, reduc_f, alphabet, max_word_len):
+def seek(hash_target, chain_len, hash_f, reduc_f, alphabet, max_word_len):
     db.set_rainbow_parameters(
         chain_len, hash_f, reduc_f, alphabet, max_word_len)
     if hash_f not in hashers.available():
@@ -50,24 +52,17 @@ def find(hash_target, chain_len, hash_f, reduc_f, alphabet, max_word_len):
 
 
 if __name__ == '__main__':
-    p = argparse.ArgumentParser(description='''Find given hash
-                                               in a single rainbow table.''')
-    p.add_argument('hash_target', metavar='hash',
-                   help="hash you are trying to find")
-    p.add_argument('chain_len', type=int,
-                   help="length of the chain")
-    p.add_argument('hash_f', choices=hashers.available(),
-                   help="password hashing function")
-    p.add_argument('reduc_f', choices=reductors.available(),
-                   help='''reduction function used for
-                           generating valid passwords''')
-    p.add_argument('max_word_len', type=int,
-                   help="maximum password length")
-    p.add_argument('-a', dest='alphabet',
-                   default=DEFAULT_ALPHABET,
-                   help='''a limited set of characters used for
-                           generating valid passwords (e.g. "-a abcd123").
-                           By default it will use all printable characters''')
+    sqs = boto3.resource('sqs')
+    queue = sqs.get_queue_by_name(QueueName=q_name)
 
-    args = p.parse_args()
-    print find(**vars(args))
+    while True:
+        for msg in queue.receive_messages(
+            MessageAttributeNames=[
+                'string',
+            ],
+            MaxNumberOfMessages=1,
+            VisibilityTimeout=100,
+            WaitTimeSeconds=5
+        ):
+            print seek(**json.loads(msg.body))
+            msg.delete()
