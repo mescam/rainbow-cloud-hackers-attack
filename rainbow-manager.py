@@ -33,7 +33,7 @@ if __name__ == '__main__':
 
     args = p.parse_args()
     combinations = (len(args.alphabet) + 1) ** args.max_word_len
-    chains = (combinations * 2) / args.chain_len
+    chains = (combinations * 3) / args.chain_len
     print 'Combinations: {}'.format(combinations)
     print 'Chains: {}'.format(chains)
 

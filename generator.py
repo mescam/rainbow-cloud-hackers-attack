@@ -46,10 +46,10 @@ if __name__ == '__main__':
             WaitTimeSeconds=5
         ):
             start_t = time.time()
-            chains = []
+            chains = {}
             request = json.loads(msg.body)
             for start_word in request['start_words']:
-                c = generate(
+                hashed, start_word = generate(
                     request['chain_len'],
                     request['hash_f'],
                     request['reduc_f'],
@@ -57,9 +57,10 @@ if __name__ == '__main__':
                     request['max_word_len'],
                     start_word
                 )
-                chains.append(c)
+                chains[hashed] = start_word
             db.batch_set(chains)
-            print "Generated {} chains in {}s".format(
+            print "Requested chains: {}, Generated: {} in {}s".format(
+                len(request['start_words']),
                 len(chains),
                 (time.time() - start_t)
             )
