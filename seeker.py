@@ -30,6 +30,8 @@ def seek(hash_target, chain_len, hash_f, reduc_f, alphabet, max_word_len):
     reduc_f = getattr(reductors, reduc_f)
 
     alphabet = list(alphabet)
+    if '' not in alphabet:
+        alphabet.append('')
 
     false_alarms = 0
     for i in xrange(chain_len, 0, -1):
