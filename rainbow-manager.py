@@ -7,6 +7,7 @@ from generator import generate
 
 q_name = 'rcha-queue-hackerz'
 
+
 def chunks(l, n):
     """Yield successive n-sized chunks from l."""
     for i in xrange(0, len(l), n):
@@ -31,7 +32,7 @@ if __name__ == '__main__':
                            By default it will use all printable characters''')
 
     args = p.parse_args()
-    combinations = len(args.alphabet) ** args.max_word_len
+    combinations = (len(args.alphabet) + 1) ** args.max_word_len
     chains = (combinations * 2) / args.chain_len
     print 'Combinations: {}'.format(combinations)
     print 'Chains: {}'.format(chains)
