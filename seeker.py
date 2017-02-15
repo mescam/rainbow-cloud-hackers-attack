@@ -1,7 +1,7 @@
 import boto3
 import json
 
-from utils import hashers, reductors, DEFAULT_ALPHABET
+from utils import hashers, reductors
 from db import DB
 
 q_name = 'rcha-queue-seekerz'

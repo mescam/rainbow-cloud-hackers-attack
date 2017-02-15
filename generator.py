@@ -1,7 +1,8 @@
 import boto3
 import json
+import time
 
-from utils import hashers, reductors, DEFAULT_ALPHABET
+from utils import hashers, reductors
 from db import DB
 
 q_name = 'rcha-queue-hackerz'
@@ -26,8 +27,7 @@ def generate(chain_len, hash_f, reduc_f, alphabet, max_word_len, start_word):
     for i in xrange(chain_len):
         hashed = hf(password)
         password = rf(hashed, alphabet, max_word_len, i)
-    db.set(hashed, start_word)
-    return start_word, hashed
+    return hashed, start_word
 
 
 if __name__ == '__main__':
@@ -40,8 +40,25 @@ if __name__ == '__main__':
                 'string',
             ],
             MaxNumberOfMessages=1,
-            VisibilityTimeout=100,
+            VisibilityTimeout=180,
             WaitTimeSeconds=5
         ):
-            print generate(**json.loads(msg.body))
+            start_t = time.time()
+            chains = []
+            request = json.loads(msg.body)
+            for start_word in request['start_words']:
+                c = generate(
+                    request['chain_len'],
+                    request['hash_f'],
+                    request['reduc_f'],
+                    request['alphabet'],
+                    request['max_word_len'],
+                    start_word
+                )
+                chains.append(c)
+            db.batch_set(chains)
+            print "Generated {} chains in {}s".format(
+                len(chains),
+                (time.time() - start_t)
+            )
             msg.delete()

@@ -1,7 +1,17 @@
 import argparse
+import json
+import boto3
 
 from utils import hashers, reductors, DEFAULT_ALPHABET
 from generator import generate
+
+q_name = 'rcha-queue-hackerz'
+
+def chunks(l, n):
+    """Yield successive n-sized chunks from l."""
+    for i in xrange(0, len(l), n):
+        yield l[i:i + n]
+
 
 if __name__ == '__main__':
     p = argparse.ArgumentParser(description='Generate a single rainbow chain.')
@@ -30,9 +40,15 @@ if __name__ == '__main__':
     for i in xrange(chains):
         start_words.add(
             reductors.naive_random(i, args.alphabet, args.max_word_len))
-    f_args = vars(args)
-    for sw in start_words:
-        f_args['start_word'] = sw
-        print generate(**f_args)
 
-    # print generate(**vars(args))
+    sqs = boto3.resource('sqs')
+    queue = sqs.get_queue_by_name(QueueName=q_name)
+
+    f_args = vars(args)
+    batch_size = min((len(start_words) / 4, 500))
+    print 'Batch size: {}'.format(batch_size)
+    for batch in chunks(list(start_words), batch_size):
+        f_args['start_words'] = batch
+        body = json.dumps(f_args)
+        queue.send_message(MessageBody=body)
+    print 'SENT!'

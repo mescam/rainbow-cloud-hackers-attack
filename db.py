@@ -40,3 +40,13 @@ class DB(object):
                 'val': value
             }
         )
+
+    def batch_set(self, items):
+        with self.table.batch_writer(overwrite_by_pkeys=['Key']) as batch:
+            for key, value in items:
+                batch.put_item(
+                    Item={
+                        'Key': self.construct_key(key),
+                        'val': value
+                    }
+                )
