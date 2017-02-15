@@ -31,6 +31,7 @@ def seek(hash_target, chain_len, hash_f, reduc_f, alphabet, max_word_len):
 
     alphabet = list(alphabet)
 
+    false_alarms = 0
     for i in xrange(chain_len, 0, -1):
         hashed = hash_target
         for j in xrange(i - 1, chain_len - 1):
@@ -41,9 +42,11 @@ def seek(hash_target, chain_len, hash_f, reduc_f, alphabet, max_word_len):
             res = check(start_word, hash_target, chain_len,
                         hash_f, reduc_f, alphabet, max_word_len)
             if res is not None:
+                print 'False alarms: {}'.format(false_alarms)
                 return res
             else:
-                print 'False alarm <{}, {}>'.format(hashed, start_word)
+                false_alarms += 1
+    print 'NOT FOUND with false alarms: {}'.format(false_alarms)
     return None
 
 

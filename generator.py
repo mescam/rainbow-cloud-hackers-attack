@@ -40,7 +40,7 @@ if __name__ == '__main__':
                 'string',
             ],
             MaxNumberOfMessages=1,
-            VisibilityTimeout=180,
+            VisibilityTimeout=300,
             WaitTimeSeconds=5
         ):
             start_t = time.time()
