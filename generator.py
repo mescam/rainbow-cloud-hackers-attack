@@ -21,12 +21,9 @@ def generate(chain_len, hash_f, reduc_f, alphabet, max_word_len, start_word):
         raise ValueError("Starting word can't be longer than the max_word_len")
 
     alphabet = list(alphabet)
-    if '' not in alphabet:
-        alphabet.append('')
 
     password = start_word
     for i in xrange(chain_len):
-        # print password
         hashed = hf(password)
         password = rf(hashed, alphabet, max_word_len, i)
     db.set(hashed, start_word)

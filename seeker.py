@@ -8,6 +8,17 @@ q_name = 'rcha-queue-seekerz'
 db = DB('rainbows')
 
 
+def check(start_word, hash_target, chain_len,
+          hash_f, reduc_f, alphabet, max_word_len):
+    password = start_word
+    for i in xrange(chain_len):
+        hashed = hash_f(password)
+        if hashed == hash_target:
+            return password
+        password = reduc_f(hashed, alphabet, max_word_len, i)
+    return None
+
+
 def seek(hash_target, chain_len, hash_f, reduc_f, alphabet, max_word_len):
     db.set_rainbow_parameters(
         chain_len, hash_f, reduc_f, alphabet, max_word_len)
@@ -19,36 +30,21 @@ def seek(hash_target, chain_len, hash_f, reduc_f, alphabet, max_word_len):
     reduc_f = getattr(reductors, reduc_f)
 
     alphabet = list(alphabet)
-    if '' not in alphabet:
-        alphabet.append('')
 
-    # firstly, find the chain which contains the password
-    found = False
-    for i in xrange(chain_len):
+    for i in xrange(chain_len, 0, -1):
         hashed = hash_target
-        for j in xrange(i, chain_len):
-            if db.exists(hashed):
-                found = True
-                start_word = db.get(hashed)
-                break
+        for j in xrange(i - 1, chain_len - 1):
             password = reduc_f(hashed, alphabet, max_word_len, j)
             hashed = hash_f(password)
-        if found:
-            break
-
-    # if you somehow didn't manage to find the chain...
-    if not found:
-        return None
-
-    # secondly, given the chain's starting word, regenerate it to find ur pass
-    password = start_word
-    for i in xrange(chain_len):
-        hashed = hash_f(password)
-        if hashed == hash_target:
-            return password
-        password = reduc_f(hashed, alphabet, max_word_len, i)
-
-    return None, "I found the chain but the password wasn't there. WTF :("
+        if db.exists(hashed):
+            start_word = db.get(hashed)
+            res = check(start_word, hash_target, chain_len,
+                        hash_f, reduc_f, alphabet, max_word_len)
+            if res is not None:
+                return res
+            else:
+                print 'False alarm <{}, {}>'.format(hashed, start_word)
+    return None
 
 
 if __name__ == '__main__':
