@@ -69,6 +69,6 @@ if __name__ == '__main__':
             print 'Got task with id = {}'.format(tid)
             tasks_db.set(tid, 'executing')
             res = seek(**request)
-            print 'Done wit result: {}'.format(res)
+            print 'Done with result: {}'.format(res)
             tasks_db.set(tid, 'done', res[0])
             msg.delete()
