@@ -50,3 +50,26 @@ class DB(object):
                         'val': items_dict[key]
                     }
                 )
+
+
+class TaskDB(object):
+
+    def __init__(self, table):
+        self.table = dynamodb.Table(table)
+
+    def get(self, key):
+        response = self.table.get_item(
+            Key={
+                'ID': key
+            }
+        )
+        return response['Item'] if 'Item' in response else None
+
+    def set(self, key, status, result=None):
+        self.table.put_item(
+            Item={
+                'ID': key,
+                'status': status,
+                'result': result
+            }
+        )

@@ -2,10 +2,11 @@ import boto3
 import json
 
 from utils import hashers, reductors
-from db import DB
+from db import DB, TaskDB
 
 q_name = 'rcha-queue-seekerz'
 db = DB('rainbows')
+tasks_db = TaskDB('tasks')
 
 
 def check(start_word, hash_target, chain_len,
@@ -44,12 +45,10 @@ def seek(hash_target, chain_len, hash_f, reduc_f, alphabet, max_word_len):
             res = check(start_word, hash_target, chain_len,
                         hash_f, reduc_f, alphabet, max_word_len)
             if res is not None:
-                print 'False alarms: {}'.format(false_alarms)
-                return res
+                return res, false_alarms
             else:
                 false_alarms += 1
-    print 'NOT FOUND with false alarms: {}'.format(false_alarms)
-    return None
+    return None, false_alarms
 
 
 if __name__ == '__main__':
@@ -65,5 +64,11 @@ if __name__ == '__main__':
             VisibilityTimeout=100,
             WaitTimeSeconds=5
         ):
-            print seek(**json.loads(msg.body))
+            request = json.loads(msg.body)
+            tid = request.pop('tid', None)
+            print 'Got task with id = {}'.format(tid)
+            tasks_db.set(tid, 'executing')
+            res = seek(**request)
+            print 'Done wit result: {}'.format(res)
+            tasks_db.set(tid, 'done', res[0])
             msg.delete()
