@@ -14,6 +14,7 @@ resource "aws_launch_configuration" "seekerz" {
     }
 
     key_name = "${aws_key_pair.master.key_name}"
+    user_data = "${file("./provisioning/seekerz.sh")}"
 }
 
 resource "aws_autoscaling_group" "seekerz" {

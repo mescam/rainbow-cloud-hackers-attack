@@ -7,9 +7,13 @@ variable "aws_key" {
 }
 
 variable "seekerz_count" {
-    default = 0
+    default = 2
 }
 
 variable "hackerz_count" {
     default = 0
+}
+
+variable "aws_account_id" { 
+    default = "658567690449"
 }

@@ -12,7 +12,7 @@ resource "aws_launch_configuration" "hackerz" {
         volume_type = "gp2"
         volume_size = 8
     }
-
+    user_data = "${file("./provisioning/hackerz.sh")}"
     key_name = "${aws_key_pair.master.key_name}"
 }
 
